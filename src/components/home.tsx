@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Clock, Settings } from "lucide-react";
 import { formatHijriDate } from "../lib/hijri";
 import SettingsModal from "./SettingsModal";
@@ -20,6 +20,12 @@ function Home() {
     const saved = localStorage.getItem("ttsEnabled");
     return saved ? JSON.parse(saved) : false;
   });
+  const [tickSoundEnabled, setTickSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem("tickSoundEnabled");
+    return saved ? JSON.parse(saved) : false;
+  });
+  
+  const audioContextRef = useRef<any>(null);
 
   // Save settings to localStorage
   useEffect(() => {
@@ -27,15 +33,53 @@ function Home() {
     localStorage.setItem("fontSize", fontSize);
     localStorage.setItem("theme", theme);
     localStorage.setItem("ttsEnabled", JSON.stringify(ttsEnabled));
-  }, [is24Hour, fontSize, theme, ttsEnabled]);
+    localStorage.setItem("tickSoundEnabled", JSON.stringify(tickSoundEnabled));
+  }, [is24Hour, fontSize, theme, ttsEnabled, tickSoundEnabled]);
+
+  // Play tick sound
+  const playTick = () => {
+    if (!tickSoundEnabled) return;
+    
+    try {
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+          audioContextRef.current = new AudioContext();
+        }
+      }
+
+      if (!audioContextRef.current) return;
+      
+      const ctx = audioContextRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      // Soft tick sound
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
+      
+      gain.gain.setValueAtTime(0.03, ctx.currentTime); // Very soft volume
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    } catch (e) {
+      // Ignore audio errors
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
+      playTick();
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [tickSoundEnabled]);
 
   // TTS Logic
   useEffect(() => {
@@ -162,6 +206,8 @@ function Home() {
         setTheme={setTheme}
         ttsEnabled={ttsEnabled}
         setTtsEnabled={setTtsEnabled}
+        tickSoundEnabled={tickSoundEnabled}
+        setTickSoundEnabled={setTickSoundEnabled}
       />
     </div>
   );

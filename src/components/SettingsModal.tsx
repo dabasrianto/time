@@ -11,6 +11,8 @@ interface SettingsModalProps {
   setTheme: (value: string) => void;
   ttsEnabled: boolean;
   setTtsEnabled: (value: boolean) => void;
+  tickSoundEnabled: boolean;
+  setTickSoundEnabled: (value: boolean) => void;
 }
 
 const SettingsModal = ({
@@ -24,6 +26,8 @@ const SettingsModal = ({
   setTheme,
   ttsEnabled,
   setTtsEnabled,
+  tickSoundEnabled,
+  setTickSoundEnabled,
 }: SettingsModalProps) => {
   if (!isOpen) return null;
 
@@ -134,19 +138,36 @@ const SettingsModal = ({
           </div>
 
           {/* TTS */}
-          <div className="flex items-center justify-between py-2 border-t border-white/5 pt-4">
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="p-2 bg-white/5 rounded-lg">
-                <Volume2 size={18} />
+          <div className="space-y-4 border-t border-white/5 pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-gray-300">
+                <div className="p-2 bg-white/5 rounded-lg">
+                  <Volume2 size={18} />
+                </div>
+                <span className="font-medium">Hourly Announcement</span>
               </div>
-              <span className="font-medium">Hourly Announcement</span>
+              <button 
+                onClick={() => setTtsEnabled(!ttsEnabled)}
+                className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${ttsEnabled ? "bg-blue-600" : "bg-white/10 hover:bg-white/20"}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${ttsEnabled ? "left-7" : "left-1"}`}></div>
+              </button>
             </div>
-            <button 
-              onClick={() => setTtsEnabled(!ttsEnabled)}
-              className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${ttsEnabled ? "bg-blue-600" : "bg-white/10 hover:bg-white/20"}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${ttsEnabled ? "left-7" : "left-1"}`}></div>
-            </button>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-gray-300">
+                <div className="p-2 bg-white/5 rounded-lg">
+                  <Clock size={18} />
+                </div>
+                <span className="font-medium">Ticking Sound</span>
+              </div>
+              <button 
+                onClick={() => setTickSoundEnabled(!tickSoundEnabled)}
+                className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${tickSoundEnabled ? "bg-blue-600" : "bg-white/10 hover:bg-white/20"}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${tickSoundEnabled ? "left-7" : "left-1"}`}></div>
+              </button>
+            </div>
           </div>
         </div>
 
