@@ -21,33 +21,68 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, theme }) => {
   const hourDegrees = (((hours % 12) + minutes / 60) / 12) * 360;
 
   const getThemeColors = () => {
+    if (theme.startsWith("#")) {
+      return {
+        face: "backdrop-blur-sm shadow-2xl border-4 border-white/20",
+        faceStyle: { backgroundColor: `${theme}4D`, borderColor: `${theme}33` },
+        hour: "shadow-lg bg-white",
+        hourStyle: {},
+        minute: "shadow-lg bg-white/80",
+        minuteStyle: {},
+        second: "shadow-md bg-white/60",
+        secondStyle: {},
+        center: "shadow-lg bg-white",
+        centerStyle: {},
+        marker: "bg-white/50",
+        markerStyle: {}
+      };
+    }
+
     switch (theme) {
       case "emerald":
         return {
-          face: "border-emerald-200/20 bg-emerald-900/30",
+          face: "border-emerald-200/20 bg-emerald-900/30 border-4",
+          faceStyle: {},
           hour: "bg-emerald-100",
+          hourStyle: {},
           minute: "bg-emerald-200",
+          minuteStyle: {},
           second: "bg-emerald-400",
+          secondStyle: {},
           center: "bg-emerald-100",
+          centerStyle: {},
           marker: "bg-emerald-100/50",
+          markerStyle: {}
         };
       case "rose":
         return {
-          face: "border-rose-200/20 bg-rose-900/30",
+          face: "border-rose-200/20 bg-rose-900/30 border-4",
+          faceStyle: {},
           hour: "bg-rose-100",
+          hourStyle: {},
           minute: "bg-rose-200",
+          minuteStyle: {},
           second: "bg-rose-400",
+          secondStyle: {},
           center: "bg-rose-100",
+          centerStyle: {},
           marker: "bg-rose-100/50",
+          markerStyle: {}
         };
       default: // blue
         return {
-          face: "border-blue-200/20 bg-blue-900/30",
+          face: "border-blue-200/20 bg-blue-900/30 border-4",
+          faceStyle: {},
           hour: "bg-blue-100",
+          hourStyle: {},
           minute: "bg-blue-200",
+          minuteStyle: {},
           second: "bg-blue-400",
+          secondStyle: {},
           center: "bg-blue-100",
+          centerStyle: {},
           marker: "bg-blue-100/50",
+          markerStyle: {}
         };
     }
   };
@@ -58,7 +93,8 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, theme }) => {
 
   return (
     <div
-      className={`relative w-[60vw] h-[60vw] max-w-[500px] max-h-[500px] rounded-full border-4 ${colors.face} backdrop-blur-sm shadow-2xl flex items-center justify-center transition-colors duration-1000`}
+      className={`relative w-[60vw] h-[60vw] max-w-[500px] max-h-[500px] rounded-full ${colors.face} flex items-center justify-center transition-colors duration-1000`}
+      style={colors.faceStyle}
     >
       {/* Clock Face Markers */}
       {[...Array(12)].map((_, i) => (
@@ -76,6 +112,7 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, theme }) => {
             style={{
               height: i % 3 === 0 ? "15%" : "10%",
               opacity: i % 3 === 0 ? 1 : 0.5,
+              ...colors.markerStyle
             }}
           />
         </div>
@@ -88,6 +125,7 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, theme }) => {
           transform: `translate(-50%, -100%) rotate(${hourDegrees}deg)`,
           top: "50%",
           left: "50%",
+          ...colors.hourStyle
         }}
       />
 
@@ -98,6 +136,7 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, theme }) => {
           transform: `translate(-50%, -100%) rotate(${minuteDegrees}deg)`,
           top: "50%",
           left: "50%",
+          ...colors.minuteStyle
         }}
       />
 
@@ -108,12 +147,14 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, theme }) => {
           transform: `translate(-50%, -100%) rotate(${secondDegrees}deg)`,
           top: "50%",
           left: "50%",
+          ...colors.secondStyle
         }}
       />
 
       {/* Center Dot */}
       <div
         className={`absolute w-4 h-4 ${colors.center} rounded-full shadow-lg z-10`}
+        style={colors.centerStyle}
       />
     </div>
   );

@@ -116,7 +116,7 @@ const SettingsModal = ({
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
               <Palette size={14} /> Theme
             </h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setTheme("blue")}
                 className={`h-12 rounded-lg bg-gradient-to-br from-blue-900 to-indigo-900 transition-all ${
@@ -144,6 +144,22 @@ const SettingsModal = ({
                 }`}
                 aria-label="Rose Theme"
               />
+              <div className={`relative h-12 rounded-lg overflow-hidden transition-all ${
+                  theme.startsWith("#")
+                    ? "border-2 border-white shadow-lg transform scale-105"
+                    : "border border-white/10 opacity-60 hover:opacity-100"
+                }`}>
+                <input
+                  type="color"
+                  value={theme.startsWith("#") ? theme : "#ffffff"}
+                  onChange={(e) => setTheme(e.target.value)}
+                  className="absolute inset-0 w-[150%] h-[150%] -top-1/4 -left-1/4 cursor-pointer p-0 border-0"
+                  style={{ background: "transparent" }}
+                />
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-black/20">
+                  <Palette size={16} className="text-white" />
+                </div>
+              </div>
             </div>
           </div>
 

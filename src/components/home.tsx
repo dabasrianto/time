@@ -186,6 +186,7 @@ function Home() {
 
   // Theme classes
   const getThemeClasses = () => {
+    if (theme.startsWith("#")) return "";
     switch (theme) {
       case "emerald":
         return "from-emerald-900 to-teal-900";
@@ -194,6 +195,13 @@ function Home() {
       default:
         return "from-blue-900 to-indigo-900";
     }
+  };
+
+  const getThemeStyle = () => {
+    if (theme.startsWith("#")) {
+      return { background: `linear-gradient(to bottom, ${theme}, #000000)` };
+    }
+    return {};
   };
 
   // Font size classes
@@ -209,7 +217,10 @@ function Home() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${getThemeClasses()} text-white flex flex-col items-center justify-center overflow-hidden transition-colors duration-1000`}>
+    <div 
+      className={`min-h-screen bg-gradient-to-b ${getThemeClasses()} text-white flex flex-col items-center justify-center overflow-hidden transition-colors duration-1000`}
+      style={getThemeStyle()}
+    >
       <div className="w-full flex flex-col items-center justify-center z-10">
         {/* Clock Display */}
         <div className="text-center mb-12 w-full flex flex-col items-center">
