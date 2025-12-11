@@ -2,11 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { Clock, Settings } from "lucide-react";
 import { formatHijriDate } from "../lib/hijri";
 import SettingsModal from "./SettingsModal";
+import AnalogClock from "./AnalogClock";
 
 function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
   
   // Initialize state from localStorage
+  const [clockMode, setClockMode] = useState<"digital" | "analog">(() => {
+    const saved = localStorage.getItem("clockMode");
+    return (saved === "analog" ? "analog" : "digital");
+  });
   const [is24Hour, setIs24Hour] = useState(() => {
     const saved = localStorage.getItem("is24Hour");
     return saved ? JSON.parse(saved) : false;
@@ -15,6 +20,10 @@ function Home() {
   
   // Settings state
   const [fontSize, setFontSize] = useState(() => localStorage.getItem("fontSize") || "medium");
+  const [dateFontSize, setDateFontSize] = useState(() => {
+    const saved = localStorage.getItem("dateFontSize");
+    return saved ? parseInt(saved) : 32;
+  });
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "blue");
   const [ttsEnabled, setTtsEnabled] = useState(() => {
     const saved = localStorage.getItem("ttsEnabled");
@@ -27,20 +36,51 @@ function Home() {
   
   const audioContextRef = useRef<any>(null);
 
+  // Initialize AudioContext on user interaction to bypass autoplay policy
+  useEffect(() => {
+    const initAudio = () => {
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContext) {
+          audioContextRef.current = new AudioContext();
+        }
+      }
+      
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {});
+      }
+    };
+
+    window.addEventListener('click', initAudio);
+    window.addEventListener('mousedown', initAudio);
+    window.addEventListener('touchstart', initAudio);
+    window.addEventListener('keydown', initAudio);
+
+    return () => {
+      window.removeEventListener('click', initAudio);
+      window.removeEventListener('mousedown', initAudio);
+      window.removeEventListener('touchstart', initAudio);
+      window.removeEventListener('keydown', initAudio);
+    };
+  }, []);
+
   // Save settings to localStorage
   useEffect(() => {
+    localStorage.setItem("clockMode", clockMode);
     localStorage.setItem("is24Hour", JSON.stringify(is24Hour));
     localStorage.setItem("fontSize", fontSize);
+    localStorage.setItem("dateFontSize", dateFontSize.toString());
     localStorage.setItem("theme", theme);
     localStorage.setItem("ttsEnabled", JSON.stringify(ttsEnabled));
     localStorage.setItem("tickSoundEnabled", JSON.stringify(tickSoundEnabled));
-  }, [is24Hour, fontSize, theme, ttsEnabled, tickSoundEnabled]);
+  }, [clockMode, is24Hour, fontSize, theme, ttsEnabled, tickSoundEnabled]);
 
   // Play tick sound
   const playTick = () => {
     if (!tickSoundEnabled) return;
     
     try {
+      // Ensure AudioContext exists
       if (!audioContextRef.current) {
         const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
         if (AudioContext) {
@@ -51,24 +91,34 @@ function Home() {
       if (!audioContextRef.current) return;
       
       const ctx = audioContextRef.current;
+      
+      // Only play if running, otherwise try to resume (will work if user interacted)
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+        // If still suspended, we can't play yet
+        if (ctx.state === 'suspended') return;
+      }
+      
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       
       osc.connect(gain);
       gain.connect(ctx.destination);
       
-      // Soft tick sound
+      // Soft tick sound - mechanical click style
       osc.type = "sine";
-      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.setValueAtTime(1000, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
       
-      gain.gain.setValueAtTime(0.03, ctx.currentTime); // Very soft volume
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      // Envelope for a crisp click
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.005); // Attack
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05); // Decay
       
-      osc.start();
+      osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.05);
     } catch (e) {
-      // Ignore audio errors
+      console.error("Audio error:", e);
     }
   };
 
@@ -161,28 +211,43 @@ function Home() {
   return (
     <div className={`min-h-screen bg-gradient-to-b ${getThemeClasses()} text-white flex flex-col items-center justify-center overflow-hidden transition-colors duration-1000`}>
       <div className="w-full flex flex-col items-center justify-center z-10">
-        {/* Digital Clock Display */}
-        <div className="text-center mb-12 w-full">
-          <h1 className={`${getFontSizeClass()} font-bold tracking-tight mb-4 font-mono leading-none drop-shadow-2xl select-none transition-all duration-300`}>
-            {formatTime()}
-          </h1>
-          <p className="text-3xl md:text-5xl text-gray-100 font-light mb-2 drop-shadow-md">
+        {/* Clock Display */}
+        <div className="text-center mb-12 w-full flex flex-col items-center">
+          {clockMode === "digital" ? (
+            <h1 className={`${getFontSizeClass()} font-bold tracking-tight mb-4 font-mono leading-none drop-shadow-2xl select-none transition-all duration-300`}>
+              {formatTime()}
+            </h1>
+          ) : (
+            <div className="mb-8 mt-4">
+              <AnalogClock currentTime={currentTime} theme={theme} />
+            </div>
+          )}
+          
+          <p 
+            className="text-gray-100 font-light mb-2 drop-shadow-md transition-all duration-300"
+            style={{ fontSize: `${dateFontSize}px`, lineHeight: 1.2 }}
+          >
             {formatGregorianDate()}
           </p>
-          <p className="text-2xl md:text-4xl text-gray-200 font-light drop-shadow-md">
+          <p 
+            className="text-gray-200 font-light drop-shadow-md transition-all duration-300"
+            style={{ fontSize: `${Math.max(12, dateFontSize * 0.75)}px`, lineHeight: 1.2 }}
+          >
             {getHijriDate()}
           </p>
         </div>
 
         {/* Quick Settings */}
         <div className="flex justify-center space-x-6 mb-8 opacity-40 hover:opacity-100 transition-opacity duration-300">
-          <button
-            onClick={() => setIs24Hour(!is24Hour)}
-            className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm"
-          >
-            <Clock size={20} />
-            <span className="text-lg">{is24Hour ? "12h" : "24h"}</span>
-          </button>
+          {clockMode === "digital" && (
+            <button
+              onClick={() => setIs24Hour(!is24Hour)}
+              className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm"
+            >
+              <Clock size={20} />
+              <span className="text-lg">{is24Hour ? "12h" : "24h"}</span>
+            </button>
+          )}
 
           <button 
             onClick={() => setIsSettingsOpen(true)}
@@ -202,12 +267,16 @@ function Home() {
         setIs24Hour={setIs24Hour}
         fontSize={fontSize}
         setFontSize={setFontSize}
+        dateFontSize={dateFontSize}
+        setDateFontSize={setDateFontSize}
         theme={theme}
         setTheme={setTheme}
         ttsEnabled={ttsEnabled}
         setTtsEnabled={setTtsEnabled}
         tickSoundEnabled={tickSoundEnabled}
         setTickSoundEnabled={setTickSoundEnabled}
+        clockMode={clockMode}
+        setClockMode={setClockMode}
       />
     </div>
   );

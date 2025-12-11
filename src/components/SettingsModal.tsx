@@ -7,12 +7,16 @@ interface SettingsModalProps {
   setIs24Hour: (value: boolean) => void;
   fontSize: string;
   setFontSize: (value: string) => void;
+  dateFontSize: number;
+  setDateFontSize: (value: number) => void;
   theme: string;
   setTheme: (value: string) => void;
   ttsEnabled: boolean;
   setTtsEnabled: (value: boolean) => void;
   tickSoundEnabled: boolean;
   setTickSoundEnabled: (value: boolean) => void;
+  clockMode: "digital" | "analog";
+  setClockMode: (value: "digital" | "analog") => void;
 }
 
 const SettingsModal = ({
@@ -22,12 +26,16 @@ const SettingsModal = ({
   setIs24Hour,
   fontSize,
   setFontSize,
+  dateFontSize,
+  setDateFontSize,
   theme,
   setTheme,
   ttsEnabled,
   setTtsEnabled,
   tickSoundEnabled,
   setTickSoundEnabled,
+  clockMode,
+  setClockMode,
 }: SettingsModalProps) => {
   if (!isOpen) return null;
 
@@ -45,8 +53,37 @@ const SettingsModal = ({
         </div>
 
         <div className="p-6 space-y-8">
-          {/* Time Format */}
+          {/* Clock Mode */}
           <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <Clock size={14} /> Clock Style
+            </h3>
+            <div className="flex bg-black/40 rounded-lg p-1 border border-white/5">
+              <button
+                onClick={() => setClockMode("digital")}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
+                  clockMode === "digital"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                Digital
+              </button>
+              <button
+                onClick={() => setClockMode("analog")}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
+                  clockMode === "analog"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                Analog
+              </button>
+            </div>
+          </div>
+
+          {/* Time Format */}
+          <div className={`space-y-3 transition-all duration-300 ${clockMode === "analog" ? "opacity-50 pointer-events-none grayscale" : ""}`}>
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
               <Clock size={14} /> Time Format
             </h3>
@@ -111,9 +148,9 @@ const SettingsModal = ({
           </div>
 
           {/* Font Size */}
-          <div className="space-y-3">
+          <div className={`space-y-3 transition-all duration-300 ${clockMode === "analog" ? "opacity-50 pointer-events-none grayscale" : ""}`}>
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <Type size={14} /> Font Size
+              <Type size={14} /> Clock Size
             </h3>
             <div className="px-2">
               <input
@@ -133,6 +170,33 @@ const SettingsModal = ({
                 <span>Small</span>
                 <span>Medium</span>
                 <span>Large</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Date Font Size */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <Type size={14} /> Date Size
+              </h3>
+              <span className="text-xs font-mono text-blue-400 bg-blue-400/10 px-2 py-1 rounded">
+                {dateFontSize}px
+              </span>
+            </div>
+            <div className="px-2">
+              <input
+                type="range"
+                min="16"
+                max="80"
+                step="1"
+                value={dateFontSize}
+                onChange={(e) => setDateFontSize(parseInt(e.target.value))}
+                className="w-full accent-blue-500 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-2 font-medium">
+                <span>16px</span>
+                <span>80px</span>
               </div>
             </div>
           </div>
